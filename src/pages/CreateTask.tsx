@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Sidebar } from "@/components/ui/sidebar";
+import { Sidebar } from "@/pages/sidebar";
 import { Save, Upload } from "lucide-react";
 
 const CreateTask = () => {
