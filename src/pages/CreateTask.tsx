@@ -1,129 +1,91 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Sidebar } from "@/components/ui/sidebar";
+import { Save, Upload } from "lucide-react";
 
 const CreateTask = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [title, setTitle] = useState("");
-  const [instructions, setInstructions] = useState("");
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
-  const createTaskMutation = useMutation({
-    mutationFn: async (newTask: { title: string; instructions: string }) => {
-      const { data, error } = await supabase
-        .from("tasks")
-        .insert([newTask])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast({
-        title: "¡Tarea creada!",
-        description: "La tarea se ha guardado correctamente.",
-      });
-      navigate("/tasks");
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "No se pudo crear la tarea. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      });
-      console.error("Error creating task:", error);
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!title.trim() || !instructions.trim()) {
-      toast({
-        title: "Campos requeridos",
-        description: "Por favor, completa todos los campos.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    createTaskMutation.mutate({ title, instructions });
-  };
+  const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-6">
-      <div className="mx-auto max-w-2xl">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/tasks")}
-          className="mb-6 gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Volver
-        </Button>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold">Crear Tarea</h1>
+      <Card className="p-6">
+        <form>
+          <div className="mb-4">
+            <textarea
+              placeholder="Describe las instrucciones de la tarea..."
+              className="min-h-[200px] border-input focus:ring-primary resize-none w-full rounded-md p-3"
+            />
+          </div>
 
-        <Card className="p-8 shadow-elevated">
-          <h1 className="mb-6 text-2xl font-bold text-foreground">Creación de Tarea</h1>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-foreground">
-                Título
-              </Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ej: Ecuaciones Lineales"
-                className="border-input focus:ring-primary"
+          {/* Botón para subir imágenes */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
+              Subir Imagen
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                id="upload-image"
               />
+              <label htmlFor="upload-image">
+                <Button variant="outline" className="gap-2">
+                  <Upload className="h-4 w-4" />
+                  Subir Imagen
+                </Button>
+              </label>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="instructions" className="text-foreground">
-                Instrucciones
-              </Label>
-              <Textarea
-                id="instructions"
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
-                placeholder="Describe las instrucciones de la tarea..."
-                className="min-h-[200px] border-input focus:ring-primary resize-none"
-              />
-            </div>
+          <div className="flex gap-3">
+            <Button
+              type="submit"
+              className="flex-1 gap-2 shadow-card hover:shadow-elevated transition-all"
+            >
+              <Save className="h-4 w-4" />
+              Guardar
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={toggleSidebar}
+              className="flex-1"
+            >
+              Configurar Fechas
+            </Button>
+          </div>
+        </form>
+      </Card>
 
-            <div className="flex gap-3">
-              <Button
-                type="submit"
-                disabled={createTaskMutation.isPending}
-                className="flex-1 gap-2 shadow-card hover:shadow-elevated transition-all"
-              >
-                <Save className="h-4 w-4" />
-                {createTaskMutation.isPending ? "Guardando..." : "Guardar"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("/tasks")}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
+      {/* Sidebar para ingresar fechas */}
+      {isSidebarOpen && (
+        <Sidebar onClose={toggleSidebar}>
+          <div className="p-4">
+            <h2 className="text-lg font-semibold mb-4">Configurar Fechas</h2>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                Fecha de Entrega
+              </label>
+              <Input type="date" />
             </div>
-          </form>
-        </Card>
-      </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                Fecha de Envío
+              </label>
+              <Input type="date" />
+            </div>
+            <Button onClick={toggleSidebar} className="w-full">
+              Guardar Fechas
+            </Button>
+          </div>
+        </Sidebar>
+      )}
     </div>
   );
 };
